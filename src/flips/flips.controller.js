@@ -83,7 +83,6 @@ function destroy(req, res) {
     (deletedFlip) =>
       (counts[deletedFlip.result] = counts[deletedFlip.result] - 1)
   );
-
   res.sendStatus(204);
 }
 
