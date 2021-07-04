@@ -2,7 +2,8 @@ const express = require("express");
 const app = express();
 const flips = require('./data/flips-data');
 const counts = require('./data/counts-data')
-// TODO: Follow instructions in the checkpoint to implement ths API.
+const flipsRouter = require('./flips/flips.router');
+const countsRouter = require('./counts/counts.router');
 
 app.use(express.json());
 
@@ -19,55 +20,57 @@ app.get('/counts/:countId', (req, res, next) => {
     res.json({ data: foundCount });
   }
 });
+app.use('/counts', countsRouter);
+// app.use('/counts', (req, res) => {
+//   res.json({ data: counts });
+// });
 
-app.use('/counts', (req, res) => {
-  res.json({ data: counts });
-});
+// app.use('/flips/:flipId', (req, res, next) => {
+//   const { flipId } = req.params;
+//   const foundFlip = flips.find((flip) => flip.id === Number(flipId));
 
-app.use('/flips/:flipId', (req, res, next) => {
-  const { flipId } = req.params;
-  const foundFlip = flips.find((flip) => flip.id === Number(flipId));
+//   if (foundFlip) {
+//     res.json({ data: foundFlip });
+//   } else {
+//     next({
+//       status: 404,
+//       message: `Flip id not found: ${flipId}`,
+//     })
+//   }
+// });
 
-  if (foundFlip) {
-    res.json({ data: foundFlip });
-  } else {
-    next({
-      status: 404,
-      message: `Flip id not found: ${flipId}`,
-    })
-  }
-});
+app.use("/flips", flipsRouter);
 
-app.get('/flips', (req, res) => {
-  res.json({ data: flips })
-});
+// app.get('/flips', (req, res) => {
+//   res.json({ data: flips })
+// });
 
-function bodyHasResultProperty(req, res, next) {
-  const { data: { result } = {} } = req.body;
-  if (result) {
-    return next();
-  }
-  next({
-    status: 400,
-    message: "A 'result' property is required.",
-  });
-}
+// function bodyHasResultProperty(req, res, next) {
+//   const { data: { result } = {} } = req.body;
+//   if (result) {
+//     return next();
+//   }
+//   next({
+//     status: 400,
+//     message: "A 'result' property is required.",
+//   });
+// }
 
-let lastFlipId = flips.reduce((maxId, flip) => Math.max(maxId, flip.id), 0);
+// let lastFlipId = flips.reduce((maxId, flip) => Math.max(maxId, flip.id), 0);
 
-app.post(
-  '/flips',
-  bodyHasResultProperty,
-  (req, res) => {
-    const { data: { result } = {} } = req.body;
-    const newFlip = {
-      id: ++lastFlipId,
-      result: result,
-    };
-    flips.push(newFlip);
-    res.status(201).json({ data: newFlip });
-  } 
-);
+// app.post(
+//   '/flips',
+//   bodyHasResultProperty,
+//   (req, res) => {
+//     const { data: { result } = {} } = req.body;
+//     const newFlip = {
+//       id: ++lastFlipId,
+//       result: result,
+//     };
+//     flips.push(newFlip);
+//     res.status(201).json({ data: newFlip });
+//   } 
+// );
 // let lastFlipId = flips.reduce((maxId, flip) => Math.max(maxId, flip.id), 0);
 
 // app.post('/flips', (req, res, next) => {
