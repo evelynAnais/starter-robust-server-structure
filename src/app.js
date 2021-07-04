@@ -6,12 +6,15 @@ const counts = require('./data/counts-data')
 
 app.use(express.json());
 
-app.use('/counts/:countId', (req, res, next) => {
+app.get('/counts/:countId', (req, res, next) => {
   const { countId } = req.params;
   const foundCount = counts[countId];
 
   if (foundCount === undefined) {
-    next(`Count id not found: ${countId}`);
+    next({
+      status: 404,
+      message: `Count id not found: ${countId}`
+    });
   } else {
     res.json({ data: foundCount });
   }
@@ -28,7 +31,10 @@ app.use('/flips/:flipId', (req, res, next) => {
   if (foundFlip) {
     res.json({ data: foundFlip });
   } else {
-    next(`Flip id not found: ${flipId}`)
+    next({
+      status: 404,
+      message: `Flip id not found: ${flipId}`,
+    })
   }
 });
 
@@ -36,22 +42,48 @@ app.get('/flips', (req, res) => {
   res.json({ data: flips })
 });
 
-let lastFlipId = flips.reduce((maxId, flip) => Math.max(maxId, flip.id), 0);
-
-app.post('/flips', (req, res, next) => {
+function bodyHasResultProperty(req, res, next) {
   const { data: { result } = {} } = req.body;
   if (result) {
+    return next();
+  }
+  next({
+    status: 400,
+    message: "A 'result' property is required.",
+  });
+}
+
+let lastFlipId = flips.reduce((maxId, flip) => Math.max(maxId, flip.id), 0);
+
+app.post(
+  '/flips',
+  bodyHasResultProperty,
+  (req, res) => {
+    const { data: { result } = {} } = req.body;
     const newFlip = {
       id: ++lastFlipId,
-      result,
+      result: result,
     };
     flips.push(newFlip);
-    counts[result] = counts[result] + 1;
     res.status(201).json({ data: newFlip });
-  } else {
-    res.sendStatus(400);
-  }
-});
+  } 
+);
+// let lastFlipId = flips.reduce((maxId, flip) => Math.max(maxId, flip.id), 0);
+
+// app.post('/flips', (req, res, next) => {
+//   const { data: { result } = {} } = req.body;
+//   if (result) {
+//     const newFlip = {
+//       id: ++lastFlipId,
+//       result,
+//     };
+//     flips.push(newFlip);
+//     counts[result] = counts[result] + 1;
+//     res.status(201).json({ data: newFlip });
+//   } else {
+//     res.sendStatus(400);
+//   }
+// });
 
 // app.use('/flips', (req, res) => {
 //   res.json({ data: flips });
@@ -59,13 +91,15 @@ app.post('/flips', (req, res, next) => {
 
 // Not found handler
 app.use((request, response, next) => {
-  next(`Not found: ${request.originalUrl}`);
+  next({ status: 404, message: `Not found: ${request.originalUrl}` });
 });
 
 // Error handler
 app.use((error, request, response, next) => {
   console.error(error);
-  response.send(error);
+  const { status = 500, message = "something went wrong!" } = error;
+  response.status(status).json({ error: message });
+  // response.send(error);
 });
 
 module.exports = app;
