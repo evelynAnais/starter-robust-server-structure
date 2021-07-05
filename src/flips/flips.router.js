@@ -1,7 +1,18 @@
-const router = require('express').Router();
+const router = require('express').Router({ mergeParams: true });
 const controller = require('./flips.controller');
+const methodNotAllowed = require('../errors/methodNotAllowed')
 
-router.route('/').get(controller.list).post(controller.create);
-router.route("/:flipId").get(controller.read).put(controller.update).delete(controller.delete);
+router
+  .route('/')
+  .get(controller.list)
+  .post(controller.create)
+  .all(methodNotAllowed);
+
+router
+  .route("/:flipId")
+  .get(controller.read)
+  .put(controller.update)
+  .delete(controller.delete)
+  .all(methodNotAllowed);
 
 module.exports = router;
